@@ -5,34 +5,28 @@ Scripts to open new windows in i3wm/Sway using alternating layouts (splith/split
 
 Installation
 ------------
-### Ubuntu
-
-```
-sudo apt-get install python3-pip git
-pip3 install i3ipc
-git clone https://github.com/olemartinorg/i3-alternating-layout
-```
-And add `alternating_layouts.py` to your `~/.i3/config` autostart:
-```
-exec --no-startup-id /path/to/alternating_layouts.py
-```
-### Arch Linux 
-Install `python-i3ipc`, then either:
-
-Clone this repository or install from the [AUR](https://aur.archlinux.org/packages/alternating-layouts-git/).
+Clone this repository.
 
 Then, for i3 add:
 ```
-exec --no-startup-id /path/to/alternating_layouts.py
+exec --no-startup-id /path/to/i3-alternating-layout
 ```
 to your `~/.i3/config`.
 
 Or, for Sway add:
 ```
-exec /path/to/alternating_layouts.py
+exec /path/to/alternating
 ```
 to your `~/.config/sway/config`.
 
+Fork Changes
+------------
+This version has been forked to add an aspect ratio command-line argument.  The previous behavior was to split vertically when the parent window's height is less than the window's width, but now, you may specify a maximum aspect ratio, above which a window will be split vertically.  This is because:
+
+- Many applications are designed with an assumption that the viewport will be wider than it is tall.
+- On an ultrawide screen, the default behavior (essentially a max aspect ratio of 1.0) will not recreate a bspwm spiral-style layout - on for example, on a 21:9 screen, the spiral behavior will only start after *two* vertical splits.
+
+To support additional CLI arguments, the script has also been rewritten to use the `argparse` library, instead of `getopt`.
 
 Screenshot
 ----------

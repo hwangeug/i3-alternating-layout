@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import getopt
+import argparse
 import sys
 import os
 from i3ipc import Connection, Event
+from functools import partial
 
 
 def find_parent(i3, window_id):
@@ -23,11 +24,12 @@ def find_parent(i3, window_id):
     return finder(i3.get_tree(), None)
 
 
-def set_layout(i3, e):
+def set_layout(max_aspect_ratio, i3, e):
     """
         Set the layout/split for the currently
         focused window to either vertical or
-        horizontal, depending on its width/height
+        horizontal, depending on its width/height,
+        and desired aspect ratio
     """
     win = i3.get_tree().find_focused()
     parent = find_parent(i3, win.id)
@@ -35,20 +37,12 @@ def set_layout(i3, e):
     if (parent and parent.layout != 'tabbed'
             and parent.layout != 'stacked'):
 
-        if win.rect.height > win.rect.width:
+        if win.rect.height > win.rect.width / max_aspect_ratio:
             if parent.orientation == 'horizontal':
                 i3.command('split v')
         else:
             if parent.orientation == 'vertical':
                 i3.command('split h')
-
-
-def print_help():
-    print("Usage: " + sys.argv[0] + " [-p path/to/pid.file]")
-    print("")
-    print("Options:")
-    print("    -p path/to/pid.file   Saves the PID for this program in the filename specified")
-    print("")
 
 
 def main():
@@ -57,21 +51,22 @@ def main():
         changes and call set_layout when focus
         changes
     """
-    opt_list, _ = getopt.getopt(sys.argv[1:], 'hp:')
-    pid_file = None
-    for opt in opt_list:
-        if opt[0] == "-h":
-            print_help()
-            sys.exit()
-        if opt[0] == "-p":
-            pid_file = opt[1]
+    parser = argparse.ArgumentParser(
+        prog="i3-alternating-layout",
+        usage="Script to open new windows in i3wm/sway using alternating layouts (splith/splitv) for each new window"
+    )
 
-    if pid_file:
-        with open(pid_file, 'w') as f:
+    parser.add_argument("--pid-file", "-p", help="path/to/pid.file   Saves the PID for this program in the filename specified")
+    parser.add_argument("--split-ratio", "-r", type=float, default=1.0, help="Maximum aspect ratio allowed before changing to splitv.")
+
+    args = parser.parse_args()
+
+    if args.pid_file:
+        with open(args.pid_file, 'w') as f:
             f.write(str(os.getpid()))
 
     i3 = Connection()
-    i3.on(Event.WINDOW_FOCUS, set_layout)
+    i3.on(Event.WINDOW_FOCUS, partial(set_layout, args.split_ratio))
     i3.main()
 
 
